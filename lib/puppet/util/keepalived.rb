@@ -56,10 +56,14 @@ module Puppet::Util::Keepalived
         }
         key = args.shift
 
-        # if there are keys left, hash them
-        args_h = {}
-        0.step(args.size-1,2) { |i| args_h[args[i]] = args[i+1] }
-        res[key] = args_h
+        # if there are keys left, hash them or just add them
+        if args.size > 1 then
+          args_h = {}
+          0.step(args.size-1,2) { |i| args_h[args[i]] = args[i+1] }
+          res[key] = args_h
+        else
+          res[key] = args.join(",")
+        end
 
         next
       end
