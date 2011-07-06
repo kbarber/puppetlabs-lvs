@@ -1,79 +1,72 @@
 require 'shellwords'
+require 'augeas'
 
 module Puppet::Util::Keepalived
 
-  def self.config_to_hash(config)
-    result = {}
-    path = []
-    rel_depth = {}
-    config.each { |l|
+  def self.get_global_defs(
+    lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
+    root = "/")
 
-      # Cleanup
-      l.chomp
-      next if l =~ /^\s*$/
-      next if l =~ /^#/
-      next if l =~ /^1/
-      l.gsub!(/^\s*/, "")
-      l.gsub!(/\s*$/, "")
+    Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
 
-      if l =~ /\{$/ then
-        # inner block
-        args = l.gsub(/\{$/, "").split(" ")
+      aug.transform(
+        :lens => "keepalived.lns",
+        :incl => "/etc/keepalived/keepalived.conf"
+      )
+      aug.load
 
-        # Add this block to the current path
-        path << args.shift
-        rel_depth[path.join(":")] = 1
+      paths = aug.match("/files/etc/keepalived/keepalived.conf/global_defs/*")
+      
+      defs = {}   
+      paths.each { |path| 
+        name = path.gsub(/.+global_defs\//, "")
+        value = aug.get(path)
+        defs[name] = value
+      }
 
-        res = result
-        path.each { |p|
-          res[p] = {} if !res.has_key?(p)
-          res = res[p]
-        }
-
-        # Deal with composite keys
-        if args.size > 0 then
-          comp_key = args.join(":")
-          res[comp_key] = {}
-
-          # Add this key to the current path
-          path << comp_key
-          rel_depth[path.join(":")] = 2
-        end
-
-        next
-      elsif l =~ /^\}$/ then 
-        # outer block
-        rel_depth[path.join(":")].times { path.pop }
-
-        next
-      else
-        # entry - use shellwords to split so quotes are supported
-        args = Shellwords.shellwords(l)
-
-        res = result
-        path.each { |p|
-          res = res[p]
-        }
-        key = args.shift
-
-        # if there are keys left, hash them or just add them
-        if args.size > 1 then
-          args_h = {}
-          0.step(args.size-1,2) { |i| args_h[args[i]] = args[i+1] }
-          res[key] = args_h
-        else
-          res[key] = args.join(",")
-        end
-
-        next
-      end
-
+      # return definitions
+      defs
     }
-    return result
   end
 
-  def self.hash_to_config(hash)
-    return ""
+  def self.set_global_defs(
+    definition, value,
+    lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
+    root = "/")
+
+    Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
+
+      aug.transform(
+        :lens => "keepalived.lns",
+        :incl => "/etc/keepalived/keepalived.conf"
+      )
+      aug.load
+
+      aug.set("/files/etc/keepalived/keepalived.conf/global_defs/#{definition}", value)
+      unless aug.save
+        raise IOError, "Failed to save changes"
+      end
+    }
+  end
+
+  def self.rm_global_def(
+    definition,
+    lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
+    root = "/")
+
+    Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
+
+      aug.transform(
+        :lens => "keepalived.lns",
+        :incl => "/etc/keepalived/keepalived.conf"
+      )
+      aug.load
+
+      aug.rm("/files/etc/keepalived/keepalived.conf/global_defs/#{definition}")
+      unless aug.save
+        raise IOError, "Failed to save changes"
+      end
+    }
   end
 
 end
