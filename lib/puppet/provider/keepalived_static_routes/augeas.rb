@@ -1,7 +1,7 @@
 Puppet::Type.type(:keepalived_static_routes).provide(:augeas) do
   desc "Augeas based provider for managing static_routes entries in keepalived.conf"
 
-  require 'puppet/util/keepalived/static_routes'
+  require 'puppet/util/keepalived'
 
   defaultfor :kernel => 'Linux'
 

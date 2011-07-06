@@ -44,7 +44,7 @@ module Puppet::Util::Keepalived
       }
     end
 
-    def delete(name)
+    def delete(definition)
       Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
         aug.transform(
           :lens => "keepalived.lns",
@@ -65,7 +65,7 @@ module Puppet::Util::Keepalived
       defs = {}   
       paths.each { |path| 
         name = path.gsub(/.+global_defs\//, "")
-        value = aug.get(path)
+        value = @aug.get(path)
         defs[name] = value
       }
   

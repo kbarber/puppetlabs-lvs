@@ -6,22 +6,24 @@ Puppet::Type.type(:keepalived_global_defs).provide(:augeas) do
   defaultfor :kernel => 'Linux'
 
   def create
-    Puppet::Util::Keepalived.set_global_defs(resource[:name],resource[:value])
+    defs = Puppet::Util::Keepalived::GlobalDefs.new
+    defs.set(resource[:name], resource[:value])
   end
 
   def destroy
-    Puppet::Util::Keepalived.rm_global_def(resource[:name])
+    defs = Puppet::Util::Keepalived::GlobalDefs.new
+    defs.delete(resource[:name])
   end
 
   def exists?
-    defs = Puppet::Util::Keepalived.get_global_defs
-    defs.has_key?(resource[:name])
+    defs = Puppet::Util::Keepalived::GlobalDefs.new
+    defs[resource[:name]] ? true : false
   end
 
   def self.instances
     instances = []
 
-    defs = Puppet::Util::Keepalived.get_global_defs
+    defs = Puppet::Util::Keepalived::GlobalDefs.new
 
     defs.each do |key,value|
       hash = {}
@@ -36,11 +38,12 @@ Puppet::Type.type(:keepalived_global_defs).provide(:augeas) do
 
   # Properties
   def value
-    defs = Puppet::Util::Keepalived.get_global_defs
+    defs = Puppet::Util::Keepalived::GlobalDefs.new
     defs[resource[:name]]
   end
 
   def value=(val)
-    Puppet::Util::Keepalived.set_global_defs(resource[:name],val)
+    defs = Puppet::Util::Keepalived::GlobalDefs.new
+    defs.set(resource[:name], val)
   end
 end
