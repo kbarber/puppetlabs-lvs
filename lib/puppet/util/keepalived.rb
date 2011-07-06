@@ -1,4 +1,3 @@
-require 'shellwords'
 require 'augeas'
 
 module Puppet::Util::Keepalived

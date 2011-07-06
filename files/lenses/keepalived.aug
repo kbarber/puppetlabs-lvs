@@ -160,9 +160,10 @@ let static_routes_field = [ indent . label "route"
                           . [ key "dev" . sto_word ] . comment_or_eol ]
 *)
 let static_routes_field = [ indent . label "route"
-                          . [ key "src" . sep_spc . [ ipaddr ] ] . sep_spc
-                          . [ key "to" . sep_spc . [ ipaddr ] ] . sep_spc
-                          . [ key "dev" . sep_spc . sto_word ] . comment_or_eol ]
+                          . ([ key "src" . sep_spc . [ ipaddr ] ] . sep_spc)?
+                          . ([ key "to" . sep_spc . [ ipaddr ] ] . sep_spc)?
+                          . ([ key "via" . sep_spc . [ ipaddr ] ] . sep_spc)?
+                          . ipdev . comment_or_eol ]
 
 (* View: static_routes *)
 let static_routes = block "static_ipaddress" static_ipaddress_field
