@@ -29,6 +29,38 @@ module Puppet::Util::Keepalived
       all.each { |a| yield a }
     end
 
+    def create(vrrp_inst, options)
+      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
+        aug.transform(
+          :lens => "keepalived.lns",
+          :incl => "/etc/keepalived/keepalived.conf"
+        )
+        aug.load
+
+        aug.set("/files/etc/keepalived/keepalived.conf/vrrp_instance[last()+1]", vrrp_inst)
+        path = "/files/etc/keepalived/keepalived.conf/vrrp_instance[last()]"
+        options.each { |key,value|
+          if key == "virtual_ipaddress" then
+            # first remove - easier this way
+            aug.rm(path + "/virtual_ipaddress")
+            value.each { |k|
+              ip, prefix = k.split("/")
+              #debug("path: #{path} ip: #{ip} prefix: #{prefix}")
+              aug.set(path + "/virtual_ipaddress/ipaddr[last()+1]", ip)
+              aug.set(path + "/virtual_ipaddress/ipaddr[last()]/prefixlen", prefix ? prefix : "32")
+            }
+          else
+            aug.set(path + "/" + key, value)
+          end
+        }
+
+        unless aug.save
+          raise IOError, "Failed to save changes"
+        end
+      }
+
+    end
+
     def set(vrrp_inst, key, value)
       Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
         aug.transform(

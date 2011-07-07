@@ -7,15 +7,14 @@ Puppet::Type.type(:keepalived_vrrp_instance).provide(:augeas) do
 
   def create
     inst = Puppet::Util::Keepalived::VrrpInstance.new
-    
     options = {
-      :priority => resource[:priority],
-      :virtual_router_id => resource[:virtual_router_id],
-      :interface => resource[:interface],
-      :virtual_ip_address => resource[:virtual_ip_address],
-      :lvs_sync_daemon_interface => resource[:lvs_sync_daemon_interface],
+      "priority" => resource[:priority],
+      "virtual_router_id" => resource[:virtual_router_id],
+      "interface" => resource[:interface],
+      "virtual_ipaddress" => resource[:virtual_ipaddress],
+      "lvs_sync_daemon_interface" => resource[:lvs_sync_daemon_interface],
     }
-    inst.set(resource[:name], options)
+    inst.create(resource[:name], options)
   end
 
   def destroy
