@@ -55,7 +55,29 @@ module Puppet::Util::Keepalived
         aug.load
 
         path = self[inst][:path]
-        aug.set(path + "/" + key, value)
+        if ["weight"].include?(key) then
+          # Configuration elements in root
+          aug.set(path + "/" + key, value)
+        elsif ["nb_get_retry", "connect_port", "connect_timeout", 
+          "delay_before_retry", "bindto", "helo_name", "misc_path", 
+          "misc_timeout", "misc_dynamic"].include?(key) then
+
+          # Configuration elements in healthcheck
+          aug.set(path + "/" + self[inst][:healthcheck].to_s.upcase + "/" + key, value)
+        elsif key == "url" then
+          # URL handling is special since its an array of hashes
+          # first remove
+          urlpath = path + "/" + self[inst][:healthcheck].to_s.upcase + "/url"
+          aug.rm(urlpath)
+
+          # now set
+          value.each { |url|
+            aug.set(urlpath + "[last()+1]", nil)
+            aug.set(urlpath + "[last()]/path", url["path"]) if url["path"]
+            aug.set(urlpath + "[last()]/digest", url["digest"]) if url["digest"]
+            aug.set(urlpath + "[last()]/status_code", url["status_code"]) if url["status_code"]
+          }
+        end
 
         unless aug.save
           raise IOError, "Failed to save changes"
@@ -128,11 +150,10 @@ module Puppet::Util::Keepalived
             urls = []
             upaths = @aug.match(rpath + "/HTTP_GET/url")
             upaths.each { |upath|
-              url = {
-                :path => @aug.get(upath + "/path"),
-                :status_code => @aug.get(upath + "/status_code"),
-                :digest => @aug.get(upath + "/digest"),
-              }
+              url = {}
+              url["path"] = @aug.get(upath + "/path") if @aug.get(upath + "/path")
+              url["status_code"] = @aug.get(upath + "/status_code") if @aug.get(upath + "/status_code")
+              url["digest"] = @aug.get(upath + "/digest") if @aug.get(upath + "/digest")
               urls << url
             }
             defs[name][:url] = urls

@@ -1,3 +1,7 @@
+require 'puppet/property/list'
+require 'puppet/property/ordered_list'
+require 'puppet/property/keyvalue'
+
 Puppet::Type.newtype(:keepalived_real_server) do
   @doc = "Type for managing real_server entries for keepalived"
 
@@ -31,7 +35,17 @@ Puppet::Type.newtype(:keepalived_real_server) do
 
   # http_get & ssl_get related properties
   newproperty(:url, :array_matching => :all) do
+  #newproperty(:url) do
+  #newproperty(:url, :parent => Puppet::Property::List) do
     desc "url"
+
+    def should_to_s(newvalue)
+      newvalue.inspect
+    end
+
+    def is_to_s(currentvalue)
+      currentvalue.inspect
+    end
   end
  
   newproperty(:connect_port) do
