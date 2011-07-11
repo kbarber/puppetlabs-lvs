@@ -3,10 +3,6 @@ require 'spec_helper'
 
 describe Puppet::Type.type(:keepalived_virtual_server) do
 
-  it "should have a 'name' parameter'" do
-    Puppet::Type.type(:keepalived_virtual_server).new(:name => "VG1")[:name].should == "VG1"
-  end
-
   properties = {
     :name => {
       :valid => ["1.1.1.1|80|TCP", "2.2.2.2|53|UDP"],
