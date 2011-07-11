@@ -5,7 +5,7 @@ task :default => [:test]
 
 desc 'Run RSpec'
 RSpec::Core::RakeTask.new(:test) do |t|
-  t.pattern = 'spec/{unit,augeas}/**/*.rb'
+  t.pattern = 'spec/{unit,augeas}/**/*_spec.rb'
   t.rspec_opts = ['--color']
 end
 

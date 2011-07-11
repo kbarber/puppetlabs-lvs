@@ -17,6 +17,9 @@ Puppet::Type.newtype(:keepalived_global_defs) do
     desc "Name of global_defs option"
 
     isnamevar
+
+    newvalues("notification_email", "notification_email_from", "smtp_server",
+      "smtp_connect_timeout", "router_id")
   end
 
   newproperty(:value) do
