@@ -25,6 +25,10 @@ Puppet::Type.newtype(:keepalived_real_server) do
 
   newproperty(:weight) do
     desc "weight"
+
+    validate do |value|
+      raise ArgumentError, "Invalid weight #{value.inspect} must be a number." unless value.class == Fixnum
+    end
   end
 
   newproperty(:healthcheck) do
@@ -89,5 +93,15 @@ Puppet::Type.newtype(:keepalived_real_server) do
   newproperty(:misc_dynamic, :boolean => true) do
     desc "misc_dynamic"
   end
-  
+
+  newproperty(:notify_down) do
+  end
+ 
+  newproperty(:notify_up) do
+  end
+
+  newproperty(:inhibit_on_failure, :boolean => true) do
+    newvalues(:true,:false)
+  end
+
 end

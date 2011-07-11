@@ -26,7 +26,7 @@ describe Puppet::Type.type(:keepalived_vrrp_instance) do
       :invalid => ["not valid"],
     },
     :track_interface => {
-      :valid => [true, false],
+      :valid => ["eth0", "eth1"],
       :invalid => ["not valid"],
     },
     :mcast_src_ip => {
@@ -97,7 +97,7 @@ describe Puppet::Type.type(:keepalived_vrrp_instance) do
       :valid => ["/tmp/notify.sh"],
       :invalid => [],
     },
-    :notify => {
+    :notify_all => {
       :valid => ["/tmp/notify.sh"],
       :invalid => [],
     },

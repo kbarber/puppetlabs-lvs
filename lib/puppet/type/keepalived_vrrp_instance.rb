@@ -146,6 +146,6 @@ Puppet::Type.newtype(:keepalived_vrrp_instance) do
   newproperty(:notify_fault) do
   end
 
-  newproperty(:notify) do
+  newproperty(:notify_all) do
   end
 end

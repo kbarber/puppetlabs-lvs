@@ -35,4 +35,39 @@ Puppet::Type.newtype(:keepalived_virtual_server) do
     desc "persistence_timeout"
   end
 
+  newproperty(:virtualhost) do
+  end
+
+  newproperty(:sorry_server) do
+  end
+
+  newproperty(:quorum_up) do
+  end
+
+  newproperty(:quorum_down) do
+  end
+
+  newproperty(:quorum) do
+  end
+
+  newproperty(:protocol) do
+  end
+
+  newproperty(:persistence_granularity) do
+  end
+
+  newproperty(:hysteresis) do
+  end
+
+  newproperty(:alpha, :boolean => true) do
+    newvalues(:true, :false)
+  end
+
+  newproperty(:omega, :boolean => true) do
+    newvalues(:true, :false)
+  end
+
+  newproperty(:ha_suspend, :boolean => true) do
+    newvalues(:true, :false)
+  end
 end

@@ -42,7 +42,7 @@ Puppet::Type.newtype(:keepalived_vrrp_sync_group) do
   newproperty(:notify_fault) do
   end
 
-  newproperty(:notify) do
+  newproperty(:notify_all) do
   end
 
   newproperty(:smtp_alert, :boolean => true) do

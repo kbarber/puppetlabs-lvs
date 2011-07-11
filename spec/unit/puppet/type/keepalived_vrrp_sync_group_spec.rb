@@ -28,7 +28,7 @@ describe Puppet::Type.type(:keepalived_vrrp_sync_group) do
       :valid => ["/bin/notify.sh"],
       :invalid => [],
     },
-    :notify => {
+    :notify_all => {
       :valid => ["/bin/notify.sh"],
       :invalid => [],
     },
