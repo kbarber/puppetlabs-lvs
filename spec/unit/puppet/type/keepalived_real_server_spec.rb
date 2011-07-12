@@ -13,7 +13,7 @@ describe Puppet::Type.type(:keepalived_real_server) do
       :invalid => ["not valid"],
     },
     :weight => {
-      :valid => [50,100,1],
+      :valid => ["50","100","1"],
       :invalid => ["not valid"],
     },
     :inhibit_on_failure => {
@@ -29,7 +29,7 @@ describe Puppet::Type.type(:keepalived_real_server) do
       :invalid => [],
     },
     :healthcheck => {
-      :valid => [{"path"=>"/","digest"=>"asdf","status"=>200}],
+      :valid => ["http_get","misc_check","ssl_get","smtp_check"],
       :invalid => ["not valid"],
     },
   }

@@ -21,18 +21,30 @@ Puppet::Type.newtype(:keepalived_virtual_server) do
 
   newproperty(:delay_loop) do
     desc "Delay loop"
+
+    validate do |value|
+      raise ArgumentError, "Invalid delay_loop #{value.inspect} must be a number." unless /^\d+$/.match(value)
+    end
   end
 
   newproperty(:lb_algo) do
     desc "lb_algo"
+
+    newvalues("rr","wrr","lc","wlc","lblc","sh","dh")
   end
 
   newproperty(:lb_kind) do
     desc "lb_kind"
+
+    newvalues("NAT","DR","TUN")
   end
 
   newproperty(:persistence_timeout) do
     desc "persistence_timeout"
+
+    validate do |value|
+      raise ArgumentError, "Invalid persistence_timeout #{value.inspect} must be a number." unless /^\d+$/.match(value)
+    end
   end
 
   newproperty(:virtualhost) do
@@ -51,6 +63,7 @@ Puppet::Type.newtype(:keepalived_virtual_server) do
   end
 
   newproperty(:protocol) do
+    newvalues("TCP")
   end
 
   newproperty(:persistence_granularity) do

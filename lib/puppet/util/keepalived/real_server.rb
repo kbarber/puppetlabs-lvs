@@ -29,7 +29,14 @@ module Puppet::Util::Keepalived
       all.each { |a| yield a }
     end
 
-    def create(vs, options)
+    def create(inst, options)
+
+      vs, rs = inst.split("/")
+      ip, port = rs.split("|")
+
+      vs_obj = VirtualServer.new
+      vspath = vs_obj[vs][:path]
+
       Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
         aug.transform(
           :lens => "keepalived.lns",
@@ -37,12 +44,22 @@ module Puppet::Util::Keepalived
         )
         aug.load
 
-        # Do sets here
+        aug.set(vspath + "/real_server[last()+1]", nil)
+        aug.set(vspath + "/real_server[last()]/ip", ip)
+        aug.set(vspath + "/real_server[last()]/port", port)
+        aug.set(vspath + "/real_server[last()]/weight", options["weight"])
 
         unless aug.save
           raise IOError, "Failed to save changes"
         end
       }
+
+      # reload so we can write some more
+      @aug.load
+
+      options.each do |k,v|
+        set(inst, k, v)
+      end
 
     end
 
@@ -58,15 +75,20 @@ module Puppet::Util::Keepalived
         if ["weight"].include?(key) then
           # Configuration elements in root
           aug.set(path + "/" + key, value)
+        elsif ["healthcheck"].include?(key) then
+          aug.set(path + "/" + key.upcase, nil)
+          aug.set(path + "/" + key.upcase + "/connect_timeout", "10")
         elsif ["nb_get_retry", "connect_port", "connect_timeout", 
           "delay_before_retry", "bindto", "helo_name", "misc_path", 
           "misc_timeout", "misc_dynamic"].include?(key) then
 
           # Configuration elements in healthcheck
+          aug.set(path + "/" + self[inst][:healthcheck].to_s.upcase, nil)
           aug.set(path + "/" + self[inst][:healthcheck].to_s.upcase + "/" + key, value)
         elsif key == "url" then
           # URL handling is special since its an array of hashes
           # first remove
+          aug.set(path + "/" + self[inst][:healthcheck].to_s.upcase, nil)
           urlpath = path + "/" + self[inst][:healthcheck].to_s.upcase + "/url"
           aug.rm(urlpath)
 

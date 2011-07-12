@@ -7,10 +7,12 @@ Puppet::Type.type(:keepalived_real_server).provide(:augeas) do
 
   def create
     inst = Puppet::Util::Keepalived::RealServer.new
-    options = {
-      "weight" => resource[:weight],
-    }
-    inst.create(resource[:name], options)
+    options = {}
+    resource.eachproperty do |prop|
+      next if prop == "ensure"
+      options[prop.to_s] = prop.value if prop.value
+    end
+    inst.create(resource[:name].to_s, options)
   end
 
   def destroy

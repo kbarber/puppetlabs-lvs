@@ -13,19 +13,19 @@ describe Puppet::Type.type(:keepalived_virtual_server) do
       :invalid => [:nounce],
     },
     :delay_loop => {
-      :valid => [5,10,15],
+      :valid => ["5","10","15"],
       :invalid => ["not valid"],
     },
     :lb_algo => {
-      :valid => ["rr","wrr"],
+      :valid => ["rr","wrr","lc","wlc","lblc","sh","dh"],
       :invalid => ["not valid"],
     },
     :lb_kind => {
-      :valid => ["NAT","DR"],
+      :valid => ["NAT","DR","TUN"],
       :invalid => ["not valid"],
     },
     :persistence_timeout => {
-      :valid => [60,30,15],
+      :valid => ["60","30","15"],
       :invalid => ["not valid"],
     },
     :persistence_granularity => {
@@ -33,7 +33,7 @@ describe Puppet::Type.type(:keepalived_virtual_server) do
       :invalid => ["not valid"],
     },
     :protocol => {
-      :valid => ["TCP","UDP"],
+      :valid => ["TCP"],
       :invalid => ["not valid"],
     },
     :ha_suspend => {
