@@ -27,7 +27,7 @@ Puppet::Type.newtype(:keepalived_real_server) do
     desc "weight"
 
     validate do |value|
-      raise ArgumentError, "Invalid weight #{value.inspect} must be a number." unless value.class == Fixnum
+      raise ArgumentError, "Invalid weight #{value.inspect} must be a number." unless /^\d+$/.match(value)
     end
   end
 
