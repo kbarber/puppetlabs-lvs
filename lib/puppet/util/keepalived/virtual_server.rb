@@ -43,12 +43,13 @@ module Puppet::Util::Keepalived
         options["port"] = port
         options["protocol"] = protocol
 
-        aug.set("/files/etc/keepalived/keepalived.conf/virtual_server[last()+1]", nil)
-        path = "/files/etc/keepalived/keepalived.conf/virtual_server[last()]"
+        path = "/files/etc/keepalived/keepalived.conf/virtual_server"
+        aug.set(path + "[last()+1]", nil)
 
-        allowed_params = ["ip","port","protocol","delay_loop","lb_algo","lb_kind","persistence_timeout"]
+        allowed_params = ["ip","port","protocol","delay_loop","lb_algo",
+          "lb_kind","persistence_timeout"]
         allowed_params.each { |k|
-          aug.set(path + "/" + k, options[k])
+          aug.set(path + "[last()]/" + k, options[k].to_s) if options[k]
         }
 
         unless aug.save

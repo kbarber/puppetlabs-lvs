@@ -58,12 +58,12 @@ module Puppet::Util::Keepalived
       @aug.load
 
       options.each do |k,v|
-        set(inst, k, v)
+        set(inst, k, v, vspath + "/real_server[last()]")
       end
 
     end
 
-    def set(inst, key, value)
+    def set(inst, key, value, pathhelp = nil)
       Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
         aug.transform(
           :lens => "keepalived.lns",
@@ -71,34 +71,41 @@ module Puppet::Util::Keepalived
         )
         aug.load
 
-        path = self[inst][:path]
-        if ["weight"].include?(key) then
+        path = pathhelp || self[inst][:path]
+        if ["weight","inhibit_on_failure","notify_up",
+          "notify_down"].include?(key) then
+
           # Configuration elements in root
           aug.set(path + "/" + key, value)
+
         elsif ["healthcheck"].include?(key) then
-          aug.set(path + "/" + key.upcase, nil)
-          aug.set(path + "/" + key.upcase + "/connect_timeout", "10")
-        elsif ["nb_get_retry", "connect_port", "connect_timeout", 
-          "delay_before_retry", "bindto", "helo_name", "misc_path", 
-          "misc_timeout", "misc_dynamic"].include?(key) then
 
-          # Configuration elements in healthcheck
-          aug.set(path + "/" + self[inst][:healthcheck].to_s.upcase, nil)
-          aug.set(path + "/" + self[inst][:healthcheck].to_s.upcase + "/" + key, value)
-        elsif key == "url" then
-          # URL handling is special since its an array of hashes
-          # first remove
-          aug.set(path + "/" + self[inst][:healthcheck].to_s.upcase, nil)
-          urlpath = path + "/" + self[inst][:healthcheck].to_s.upcase + "/url"
-          aug.rm(urlpath)
+          hc = value["type"].upcase
+          hcpath = path + "/" + hc
 
-          # now set
-          value.each { |url|
-            aug.set(urlpath + "[last()+1]", nil)
-            aug.set(urlpath + "[last()]/path", url["path"]) if url["path"]
-            aug.set(urlpath + "[last()]/digest", url["digest"]) if url["digest"]
-            aug.set(urlpath + "[last()]/status_code", url["status_code"]) if url["status_code"]
-          }
+          # TODO: remove any existing healthchecks
+          aug.rm(path + "/HTTP_GET")
+
+          aug.set(hcpath, nil)
+
+          value.each do |k,v|
+            next if ["type"].include?(k)
+            if k == "url" then
+              # URL handling is special since its an array of hashes
+              # first remove
+              urlpath = hcpath + "/url"
+
+              # now set
+              v.each { |url|
+                aug.set(urlpath + "[last()+1]", nil)
+                aug.set(urlpath + "[last()]/path", url["path"]) if url["path"]
+                aug.set(urlpath + "[last()]/digest", url["digest"]) if url["digest"]
+                aug.set(urlpath + "[last()]/status_code", url["status_code"]) if url["status_code"]
+              }
+            else
+              aug.set(hcpath + "/" + k, v)
+            end
+          end
         end
 
         unless aug.save
@@ -141,47 +148,54 @@ module Puppet::Util::Keepalived
           rname = rip + "|" + rport
 
           name = vname + "/" + rname
-     
+
           # prepare hash to be returned
-          healthcheck = nil
-          if @aug.exists(rpath + "/HTTP_GET") then
-            healthcheck = :http_get
-          elsif @aug.exists(rpath + "/SSL_GET") then
-            healthcheck = :ssl_get
-          elsif @aug.exists(rpath + "/TCP_CHECK") then
-            healthcheck = :tcp_check
-          elsif @aug.exists(rpath + "/SMTP_CHECK") then
-            healthcheck = :smtp_check
-          elsif @aug.exists(rpath + "/MISC_CHECK") then
-            healthcheck = :misc_check
-          end
           defs[name] = {
-            :weight => @aug.get(rpath + "/weight"),
-            :healthcheck => healthcheck,
             :path => rpath,
           }
 
-          case healthcheck
-          when :http_get, :ssl_get
-            defs[name][:connect_port] = @aug.get(rpath + "/HTTP_GET/connect_port")
-            defs[name][:bindto] = @aug.get(rpath + "/HTTP_GET/bindto")
-            defs[name][:connect_timeout] = @aug.get(rpath + "/HTTP_GET/connect_timeout")
-            defs[name][:nb_get_retry] = @aug.get(rpath + "/HTTP_GET/nb_get_retry")
-            defs[name][:delay_before_retry] = @aug.get(rpath + "/HTTP_GET/delay_before_retry")
+          defs[name][:weight] = @aug.get(rpath + "/weight") if @aug.get(rpath + "/weight")
+    
+          healthcheck = nil
+          if @aug.exists(rpath + "/HTTP_GET") then
+            healthcheck = "HTTP_GET"
+          elsif @aug.exists(rpath + "/SSL_GET") then
+            healthcheck = "SSL_GET"
+          elsif @aug.exists(rpath + "/TCP_CHECK") then
+            healthcheck = "TCP_CHECK"
+          elsif @aug.exists(rpath + "/SMTP_CHECK") then
+            healthcheck = "SMTP_CHECK"
+          elsif @aug.exists(rpath + "/MISC_CHECK") then
+            healthcheck = "MISC_CHECK"
+          end
 
-            urls = []
-            upaths = @aug.match(rpath + "/HTTP_GET/url")
-            upaths.each { |upath|
-              url = {}
-              url["path"] = @aug.get(upath + "/path") if @aug.get(upath + "/path")
-              url["status_code"] = @aug.get(upath + "/status_code") if @aug.get(upath + "/status_code")
-              url["digest"] = @aug.get(upath + "/digest") if @aug.get(upath + "/digest")
-              urls << url
+          if healthcheck then
+            defs[name][:healthcheck] = {
+              "type" => healthcheck
             }
-            defs[name][:url] = urls
-          when :tcp_check
-          when :smtp_check
-          when :misc_check
+
+            case healthcheck
+            when "HTTP_GET", "SSL_GET"
+              hcpath = rpath + "/" + healthcheck
+              ["connect_port", "bindto", "connect_timeout", "nb_get_retry",
+               "delay_before_retry"].each do |prop|
+                defs[name][:healthcheck][prop] = @aug.get(hcpath + "/" + prop) if @aug.get(hcpath + "/" + prop)
+              end
+  
+              urls = []
+              upaths = @aug.match(hcpath + "/url")
+              upaths.each { |upath|
+                url = {}
+                url["path"] = @aug.get(upath + "/path") if @aug.get(upath + "/path")
+                url["status_code"] = @aug.get(upath + "/status_code") if @aug.get(upath + "/status_code")
+                url["digest"] = @aug.get(upath + "/digest") if @aug.get(upath + "/digest")
+                urls << url
+              }
+              defs[name][:healthcheck]["url"] = urls
+            when "TCP_CHECK"
+            when "SMTP_CHECK"
+            when "MISC_CHECK"
+            end
           end
         }
       }

@@ -29,7 +29,7 @@ describe Puppet::Type.type(:keepalived_real_server) do
       :invalid => [],
     },
     :healthcheck => {
-      :valid => ["http_get","misc_check","ssl_get","smtp_check"],
+      :valid => [{"connect_port"=>"80", "connect_timeout"=>"3", "url"=>[{"status_code"=>"200", "path"=>"/"}], "delay_before_retry"=>"3", "type"=>"HTTP_GET", "nb_get_retry"=>"3"}],
       :invalid => ["not valid"],
     },
   }

@@ -7,12 +7,10 @@ Puppet::Type.type(:keepalived_virtual_server).provide(:augeas) do
 
   def create
     inst = Puppet::Util::Keepalived::VirtualServer.new
-    options = {
-      "delay_loop" => resource[:delay_loop],
-      "lb_algo" => resource[:lb_algo],
-      "lb_kind" => resource[:lb_kind],
-      "persistence_timeout" => resource[:persistence_timeout],
-    }
+    options = {}
+    ["delay_loop","lb_algo","lb_kind","persistence_timeout"].each do |prop|
+      options[prop] = resource[prop.to_sym] if resource[prop.to_sym]
+    end
     inst.create(resource[:name], options)
   end
 
