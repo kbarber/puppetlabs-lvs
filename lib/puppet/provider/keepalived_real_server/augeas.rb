@@ -170,4 +170,39 @@ Puppet::Type.type(:keepalived_real_server).provide(:augeas) do
     inst.set(resource[:name],"misc_dynamic",val)
   end
 
+  def notify_down
+    inst = Puppet::Util::Keepalived::RealServer.new
+    inst[resource[:name]][:notify_down]
+  end
+
+  def notify_down=(val)
+    inst = Puppet::Util::Keepalived::RealServer.new
+    inst.set(resource[:name],"notify_down",val)
+  end
+
+  def notify_up
+    inst = Puppet::Util::Keepalived::RealServer.new
+    inst[resource[:name]][:notify_up]
+  end
+
+  def notify_up=(val)
+    inst = Puppet::Util::Keepalived::RealServer.new
+    inst.set(resource[:name],"notify_up",val)
+  end
+
+  def notify_all
+    inst = Puppet::Util::Keepalived::RealServer.new
+    inst[resource[:name]][:notify]
+  end
+
+  def notify_all=(val)
+    inst = Puppet::Util::Keepalived::RealServer.new
+    inst.set(resource[:name],"notify",val)
+  end
+
+  def inhibit_on_failure
+  end
+  def inhibit_on_failure=(val)
+  end
+
 end

@@ -20,7 +20,7 @@ module Puppet::Util::Keepalived
     end
 
     def [](index)
-      all = self.get_all
+      all = get_all()
       all[index]
     end
 
@@ -68,8 +68,6 @@ module Puppet::Util::Keepalived
         value = @aug.get(path)
         defs[name] = value
       }
-  
-      @aug.close
   
       # return definitions
       defs

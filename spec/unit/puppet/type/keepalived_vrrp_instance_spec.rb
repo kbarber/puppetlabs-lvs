@@ -38,19 +38,19 @@ describe Puppet::Type.type(:keepalived_vrrp_instance) do
       :invalid => ["not valid"],
     },
     :garp_master_delay => {
-      :valid => [10, 5, 7],
+      :valid => ["10", "5", "7"],
       :invalid => ["not valid"],
     },
     :virtual_router_id => {
-      :valid => [50,100,150],
+      :valid => ["50","100","150"],
       :invalid => ["not valid"],
     },
     :priority => {
-      :valid => [100,50,75],
+      :valid => ["100","50","75"],
       :invalid => ["not valid"],
     },
     :advert_int => {
-      :valid => [1,2,3],
+      :valid => ["1","2","3"],
       :invalid => ["not valid"],
     },
     :auth_type => {
@@ -78,7 +78,7 @@ describe Puppet::Type.type(:keepalived_vrrp_instance) do
       :invalid => ["not valid"],
     },
     :preempt_delay => {
-      :valid => [1,2,3],
+      :valid => ["1","2","3"],
       :invalid => ["not valid"],
     },
     :debug => {

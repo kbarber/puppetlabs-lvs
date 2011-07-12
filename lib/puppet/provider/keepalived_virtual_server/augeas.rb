@@ -83,4 +83,58 @@ Puppet::Type.type(:keepalived_virtual_server).provide(:augeas) do
     inst.set(resource[:name],"persistence_timeout",val)
   end
 
+  def virtualhost
+  end
+  def virtualhost=(val)
+  end
+
+  def sorry_server
+  end
+  def sorry_server=(val)
+  end
+
+  def quorum_up
+  end
+  def quorum_up=(val)
+  end
+
+  def quorum_down
+  end
+  def quorum_down=(val)
+  end
+
+  def quorum
+  end
+  def quorum=(val)
+  end
+
+  def protocol
+  end
+  def protocol=(val)
+  end
+
+  def persistence_granularity
+  end
+  def persistence_granularity=(val)
+  end
+
+  def hysteresis
+  end
+  def hysteresis=(val)
+  end
+
+  def alpha
+  end
+  def alpha=(val)
+  end
+
+  def omega
+  end
+  def omega=(val)
+  end
+
+  def ha_suspend
+  end
+  def ha_suspend=(val)
+  end
 end

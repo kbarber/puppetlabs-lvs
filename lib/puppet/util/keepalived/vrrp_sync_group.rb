@@ -40,7 +40,7 @@ module Puppet::Util::Keepalived
         aug.set("/files/etc/keepalived/keepalived.conf/vrrp_sync_group[last()+1]", vrrp_inst)
         options.each { |key,value|
           path = "/files/etc/keepalived/keepalived.conf/vrrp_sync_group[last()]"
-          if key == "groups" then
+          if key == "group" then
             value.each { |group|
               aug.set(path + "/group/" + group, nil)
             }
@@ -65,7 +65,7 @@ module Puppet::Util::Keepalived
         aug.load
 
         path = self[vrrp_inst][:path]
-        if key == "groups" then
+        if key == "group" then
           # first remove - easier this way
           aug.rm(path + "/group")
           value.each { |k|
@@ -110,7 +110,7 @@ module Puppet::Util::Keepalived
 
         # prepare hash to be returned
         defs[name] = {
-          :groups => groups,
+          :group => groups,
           :path => path,
         }
       }

@@ -9,19 +9,19 @@ Puppet::Type.type(:keepalived_vrrp_sync_group).provide(:augeas) do
     groups = Puppet::Util::Keepalived::VrrpSyncGroup.new
 
     options = {
-      "groups" => resource[:groups],
+      "groups" => resource[:groups].to_s,
     }
-    groups.create(resource[:name], options)
+    groups.create(resource[:name].to_s, options)
   end
 
   def destroy
     groups = Puppet::Util::Keepalived::VrrpSyncGroup.new
-    groups.delete(resource[:name])
+    groups.delete(resource[:name].to_s)
   end
 
   def exists?
     groups = Puppet::Util::Keepalived::VrrpSyncGroup.new
-    groups[resource[:name]] ? true : false
+    groups[resource[:name].to_s] ? true : false
   end
 
   def self.instances
@@ -41,14 +41,38 @@ Puppet::Type.type(:keepalived_vrrp_sync_group).provide(:augeas) do
   end
 
   # Properties
-  def groups 
+  def group 
     groups = Puppet::Util::Keepalived::VrrpSyncGroup.new
-    groups[resource[:name]][:groups]
+    groups[resource[:name].to_s][:group]
   end
 
-  def groups=(val)
+  def group=(val)
     groups = Puppet::Util::Keepalived::VrrpSyncGroup.new
-    groups.set(resource[:name], "groups", val)
+    groups.set(resource[:name].to_s, "group", val)
   end
 
+  def notify_master
+  end
+  def notify_master=(val)
+  end
+
+  def notify_backup
+  end
+  def notify_backup=(val)
+  end
+
+  def notify_fault
+  end
+  def notify_fault=(val)
+  end
+
+  def notify_all
+  end
+  def notify_all=(val)
+  end
+
+  def smtp_alert
+  end
+  def smtp_alert=(val)
+  end
 end

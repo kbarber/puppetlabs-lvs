@@ -7,17 +7,17 @@ Puppet::Type.type(:keepalived_global_defs).provide(:augeas) do
 
   def create
     defs = Puppet::Util::Keepalived::GlobalDefs.new
-    defs.set(resource[:name], resource[:value])
+    defs.set(resource[:name].to_s, resource[:value].to_s)
   end
 
   def destroy
     defs = Puppet::Util::Keepalived::GlobalDefs.new
-    defs.delete(resource[:name])
+    defs.delete(resource[:name].to_s)
   end
 
   def exists?
     defs = Puppet::Util::Keepalived::GlobalDefs.new
-    defs[resource[:name]] ? true : false
+    defs[resource[:name].to_s] ? true : false
   end
 
   def self.instances
@@ -39,11 +39,11 @@ Puppet::Type.type(:keepalived_global_defs).provide(:augeas) do
   # Properties
   def value
     defs = Puppet::Util::Keepalived::GlobalDefs.new
-    defs[resource[:name]]
+    defs[resource[:name].to_s]
   end
 
   def value=(val)
     defs = Puppet::Util::Keepalived::GlobalDefs.new
-    defs.set(resource[:name], val)
+    defs.set(resource[:name].to_s, val)
   end
 end

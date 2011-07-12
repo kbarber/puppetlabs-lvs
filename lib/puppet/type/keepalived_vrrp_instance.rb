@@ -39,7 +39,7 @@ Puppet::Type.newtype(:keepalived_vrrp_instance) do
     desc "virtual_router_id"
 
     validate do |value|
-      raise ArgumentError, "Invalid virtual_router_id #{value.inspect} must be a number." unless value.class == Fixnum
+      raise ArgumentError, "Invalid virtual_router_id #{value.inspect} must be a number." unless /^\d+$/.match(value)
     end
   end
 
@@ -60,7 +60,7 @@ Puppet::Type.newtype(:keepalived_vrrp_instance) do
     desc "priority"
 
     validate do |value|
-      raise ArgumentError, "Invalid priority #{value.inspect} must be a number." unless value.class == Fixnum
+      raise ArgumentError, "Invalid priority #{value.inspect} must be a number." unless /^\d+$/.match(value)
     end
   end
 
@@ -98,14 +98,14 @@ Puppet::Type.newtype(:keepalived_vrrp_instance) do
     desc "garp_master_delay"
 
     validate do |value|
-      raise ArgumentError, "Invalid garp_master_delay #{value.inspect} must be a number." unless value.class == Fixnum
+      raise ArgumentError, "Invalid garp_master_delay #{value.inspect} must be a number." unless /^\d+$/.match(value)
     end
   end
 
   newproperty(:advert_int) do
 
     validate do |value|
-      raise ArgumentError, "Invalid advert_int #{value.inspect} must be a number." unless value.class == Fixnum
+      raise ArgumentError, "Invalid advert_int #{value.inspect} must be a number." unless /^\d+$/.match(value)
     end
   end
   
@@ -129,7 +129,7 @@ Puppet::Type.newtype(:keepalived_vrrp_instance) do
   newproperty(:preempt_delay) do
 
     validate do |value|
-      raise ArgumentError, "Invalid preempt_delay #{value.inspect} must be a number." unless value.class == Fixnum
+      raise ArgumentError, "Invalid preempt_delay #{value.inspect} must be a number." unless /^\d+$/.match(value)
     end
   end
 

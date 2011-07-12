@@ -95,4 +95,89 @@ Puppet::Type.type(:keepalived_vrrp_instance).provide(:augeas) do
     inst.set(resource[:name],"lvs_sync_daemon_interface",val)
   end
 
+  def state
+    inst = Puppet::Util::Keepalived::VrrpInstance.new
+    inst[resource[:name]][:state]
+  end
+
+  def state=(val)
+    inst = Puppet::Util::Keepalived::VrrpInstance.new
+    inst.set(resource[:name],"state",val)
+  end
+
+  def dont_track_primary
+  end
+  def dont_track_primary=(val)
+  end
+
+  def track_interface
+  end
+  def track_interface=(val)
+  end
+
+  def mcast_src_ip
+  end
+  def mcast_src_ip=(val)
+  end
+
+  def garp_master_delay
+  end
+  def garp_master_delay=(val)
+  end
+
+  def advert_int
+  end
+  def advert_int=(val)
+  end
+
+  def auth_type
+  end
+  def auth_type=(val)
+  end
+
+  def auth_pass
+  end
+  def auth_pass=(val)
+  end
+
+  def virtual_ipaddress_excluded
+  end
+  def virtual_ipaddress_excluded=(val)
+  end
+
+  def virtual_routes
+  end
+  def virtual_routes=(val)
+  end
+
+  def nopreempt
+  end
+  def nopreempt=(val)
+  end 
+
+  def preempt_delay
+  end
+  def preempt_delay=(val)
+  end 
+
+  def notify_master
+  end
+  def notify_master=(val)
+  end 
+
+  def notify_backup
+  end
+  def notify_backup=(val)
+  end 
+
+  def notify_fault
+  end
+  def notify_fault=(val)
+  end 
+
+  def notify_all
+  end
+  def notify_all=(val)
+  end 
+
 end
