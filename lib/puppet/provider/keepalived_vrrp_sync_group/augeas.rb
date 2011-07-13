@@ -9,7 +9,7 @@ Puppet::Type.type(:keepalived_vrrp_sync_group).provide(:augeas) do
     groups = Puppet::Util::Keepalived::VrrpSyncGroup.new
 
     options = {
-      "groups" => resource[:groups].to_s,
+      "group" => resource[:group].to_s,
     }
     groups.create(resource[:name].to_s, options)
   end
