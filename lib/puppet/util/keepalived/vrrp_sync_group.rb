@@ -1,104 +1,51 @@
 require 'augeas'
+require 'puppet/util/keepalived'
 
 module Puppet::Util::Keepalived
 
-  class VrrpSyncGroup
+  class VrrpSyncGroup < Common
 
     def initialize(lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
       root = "/")
-
-      @lenses = lenses
-      @rootaug = root
-
-      @aug = Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD)
-      @aug.transform(
-        :lens => "keepalived.lns",
-        :incl => "/etc/keepalived/keepalived.conf"
-      )
-      @aug.load
-
-    end
-
-    def [](index)
-      all = self.get_all
-      all[index]
-    end
-
-    def each
-      all = self.get_all
-      all.each { |a| yield a }
+      @aug = augload(lenses, root)
     end
 
     def create(vrrp_inst, options)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
-        aug.set("/files/etc/keepalived/keepalived.conf/vrrp_sync_group[last()+1]", vrrp_inst)
-        options.each { |key,value|
-          path = "/files/etc/keepalived/keepalived.conf/vrrp_sync_group[last()]"
+      augsave do |aug|
+        aug.defnode("vsgpath", "$root/vrrp_sync_group[last()+1]", vrrp_inst)
+        options.each do |key,value|
+          path = "$root/vrrp_sync_group[last()]"
           if key == "group" then
-            value.each { |group|
-              aug.set(path + "/group/" + group, nil)
-            }
+            value.each { |group| aug.set("$vsgpath/group/#{group}", nil) }
           else
-            aug.set(path + "/" + key, value)
+            aug.set("$vsgpath/#{key}", value)
           end
-  
-        }
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
         end
-      }
+      end
     end
 
     def set(vrrp_inst, key, value)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         path = self[vrrp_inst][:path]
         if key == "group" then
           # first remove - easier this way
           aug.rm(path + "/group")
-          value.each { |k|
-            aug.set(path + "/group/" + k, nil)
-          }
+          value.each { |k| aug.set(path + "/group/" + k, nil) }
         else
           aug.set(path + "/" + key, value)
         end
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
 
     def delete(vrrp_inst)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         path = self[vrrp_inst][:path]
         aug.rm(path)
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
   
     def get_all
-      paths = @aug.match("/files/etc/keepalived/keepalived.conf/vrrp_sync_group")
+      paths = @aug.match("$root/vrrp_sync_group")
   
       defs = {}   
       paths.each { |path| 

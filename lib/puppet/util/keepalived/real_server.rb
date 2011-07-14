@@ -49,6 +49,10 @@ module Puppet::Util::Keepalived
 
           # TODO: remove any existing healthchecks
           aug.rm(path + "/HTTP_GET")
+          aug.rm(path + "/SSL_GET")
+          aug.rm(path + "/MISC_CHECK")
+          aug.rm(path + "/TCP_CHECK")
+          aug.rm(path + "/SMTP_CHECK")
 
           aug.defnode("hcpath", path + "/" + hc, nil)
 
@@ -80,7 +84,7 @@ module Puppet::Util::Keepalived
     end
   
     def get_all
-      vpaths = @aug.match("/files/etc/keepalived/keepalived.conf/virtual_server")
+      vpaths = @aug.match("$root/virtual_server")
   
       defs = {}   
       vpaths.each { |vpath| 
@@ -141,8 +145,11 @@ module Puppet::Util::Keepalived
               }
               defs[name][:healthcheck]["url"] = urls
             when "TCP_CHECK"
+              # TODO
             when "SMTP_CHECK"
+              # TODO
             when "MISC_CHECK"
+              # TODO
             end
           end
         }
