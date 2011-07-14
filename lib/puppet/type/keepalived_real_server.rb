@@ -53,4 +53,9 @@ Puppet::Type.newtype(:keepalived_real_server) do
     newvalues(:true,:false)
   end
 
+  autorequire(:keepalived_virtual_server) do
+    name = @parameters[:name].value
+    name.split("/")[0]
+  end
+
 end

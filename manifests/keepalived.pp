@@ -103,6 +103,27 @@ class lvs::keepalived (
     recurse => true,
     purge => true,
   }
+
+  # Naive attempt to get at least the resources in-class to do the proper
+  # ordering thing.
+  Keeaplived_global_defs {
+    require => File["/var/lib/puppet/modules/${module_name}/augeas_lenses"],
+  }
+  Keeaplived_static_routes {
+    require => File["/var/lib/puppet/modules/${module_name}/augeas_lenses"],
+  }
+  Keeaplived_vrrp_instance {
+    require => File["/var/lib/puppet/modules/${module_name}/augeas_lenses"],
+  }
+  Keeaplived_vrrp_sync_group {
+    require => File["/var/lib/puppet/modules/${module_name}/augeas_lenses"],
+  }
+  Keeaplived_real_server {
+    require => File["/var/lib/puppet/modules/${module_name}/augeas_lenses"],
+  }
+  Keeaplived_virtual_server {
+    require => File["/var/lib/puppet/modules/${module_name}/augeas_lenses"],
+  }
   
   #############
   # Resources #
