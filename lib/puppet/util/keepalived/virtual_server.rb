@@ -1,100 +1,49 @@
 require 'augeas'
+require 'puppet/util/keepalived'
 
 module Puppet::Util::Keepalived
 
-  class VirtualServer
+  class VirtualServer < Common
 
     def initialize(lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
       root = "/")
-
-      @lenses = lenses
-      @rootaug = root
-
-      @aug = Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD)
-      @aug.transform(
-        :lens => "keepalived.lns",
-        :incl => "/etc/keepalived/keepalived.conf"
-      )
-      @aug.load
-
-    end
-
-    def [](index)
-      all = self.get_all
-      all[index]
-    end
-
-    def each
-      all = self.get_all
-      all.each { |a| yield a }
+      @aug = augload(lenses,root)
     end
 
     def create(vs, options)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         # Grab elements from title
         ip, port, protocol = vs.split("|")
         options["ip"] = ip
         options["port"] = port
         options["protocol"] = protocol
 
-        path = "/files/etc/keepalived/keepalived.conf/virtual_server"
-        aug.set(path + "[last()+1]", nil)
+        aug.defnode("vspath", "$root/virtual_server[last()+1]", nil)
 
         allowed_params = ["ip","port","protocol","delay_loop","lb_algo",
           "lb_kind","persistence_timeout"]
-        allowed_params.each { |k|
-          aug.set(path + "[last()]/" + k, options[k].to_s) if options[k]
-        }
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
+        allowed_params.each do |k|
+          aug.set("$vspath/#{k}", options[k].to_s) if options[k]
         end
-      }
-
+      end
     end
 
     def set(inst, key, value)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         path = self[inst][:path]
         aug.set(path + "/" + key, value)
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
 
     def delete(inst)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         path = self[inst][:path]
         aug.rm(path)
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
   
     def get_all
-      paths = @aug.match("/files/etc/keepalived/keepalived.conf/virtual_server")
+      paths = @aug.match("$root/virtual_server")
   
       defs = {}   
       paths.each { |path| 

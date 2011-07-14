@@ -1,66 +1,29 @@
 require 'augeas'
+require 'puppet/util/keepalived'
 
 module Puppet::Util::Keepalived 
 
-  class GlobalDefs
+  class GlobalDefs < Common
 
     def initialize(lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
       root = "/")
-
-      @lenses = lenses
-      @rootaug = root
-
-      @aug = Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD)
-      @aug.transform(
-        :lens => "keepalived.lns",
-        :incl => "/etc/keepalived/keepalived.conf"
-      )
-      @aug.load
-
-    end
-
-    def [](index)
-      all = get_all()
-      all[index]
-    end
-
-    def each
-      all = self.get_all
-      all.each { |a| yield a }
+      @aug = augload(lenses,root)
     end
 
     def set(definition, value)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
-        aug.set("/files/etc/keepalived/keepalived.conf/global_defs/#{definition}", value)
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      augsave do |aug|
+        aug.set("$root/global_defs/#{definition}", value)
+      end
     end
 
     def delete(definition)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
-        aug.rm("/files/etc/keepalived/keepalived.conf/global_defs/#{definition}")
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      augsave do |aug|
+        aug.rm("$root/global_defs/#{definition}")
+      end
     end
   
     def get_all
-      paths = @aug.match("/files/etc/keepalived/keepalived.conf/global_defs/*")
+      paths = @aug.match("$root/global_defs/*")
   
       defs = {}   
       paths.each { |path| 

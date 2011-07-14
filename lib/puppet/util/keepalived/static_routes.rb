@@ -3,31 +3,11 @@ require 'puppet/util/keepalived'
 
 module Puppet::Util::Keepalived 
 
-  class StaticRoutes
+  class StaticRoutes < Common
 
     def initialize(lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
       root = "/")
-
-      @lenses = lenses
-      @rootaug = root
-
-      @aug = Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD)
-      @aug.transform(
-        :lens => "keepalived.lns",
-        :incl => "/etc/keepalived/keepalived.conf"
-      )
-      @aug.load
-
-    end
-
-    def [](index)
-      all = self.get_all
-      all[index]
-    end
-
-    def each
-      all = self.get_all
-      all.each { |a| yield a }
+      @aug = augload(lenses,root)
     end
 
     def set(srcto, param, value)
@@ -40,18 +20,9 @@ module Puppet::Util::Keepalived
         path += rootpath + "/via/ipaddr"
       end
 
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         aug.set(path, value)
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
 
     def create(name, dev, via)
@@ -67,45 +38,26 @@ module Puppet::Util::Keepalived
         src_prefix = 32
       end
 
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
-        pref = "/files/etc/keepalived/keepalived.conf"
-        aug.set(pref + "/static_routes/route[last()+1]/src/ipaddr", src)
-        aug.set(pref + "/static_routes/route[last()]/src/ipaddr/prefixlen", src_prefix)
-        aug.set(pref + "/static_routes/route[last()]/to/ipaddr", to)
-        aug.set(pref + "/static_routes/route[last()]/to/ipaddr/prefixlen", to_prefix)
-        aug.set(pref + "/static_routes/route[last()]/via/ipaddr", via)
-        aug.set(pref + "/static_routes/route[last()]/dev", dev)
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      augsave do |aug|
+        aug.defnode("srpath", "$root/static_routes/route[last()+1]", nil)
+        aug.set("$srpath/src/ipaddr", src)
+        aug.set("$srpath/src/ipaddr/prefixlen", src_prefix)
+        aug.set("$srpath/to/ipaddr", to)
+        aug.set("$srpath/to/ipaddr/prefixlen", to_prefix)
+        aug.set("$srpath/via/ipaddr", via)
+        aug.set("$srpath/dev", dev)
+      end
     end
 
     def delete(name)
       route = self[name]
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         aug.rm(route[:path])
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
   
     def get_all
-      paths = @aug.match("/files/etc/keepalived/keepalived.conf/static_routes/*")
+      paths = @aug.match("$root/static_routes/*")
   
       defs = {}   
       paths.each { |path| 
@@ -126,8 +78,6 @@ module Puppet::Util::Keepalived
         defs[label][:via] = via if via
         defs[label][:path] = path
       }
-  
-      @aug.close
   
       # return definitions
       defs

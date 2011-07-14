@@ -1,42 +1,19 @@
 require 'augeas'
+require 'puppet/util/keepalived'
 
 module Puppet::Util::Keepalived
 
-  class VrrpInstance
+  class VrrpInstance < Common
 
     def initialize(lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
       root = "/")
 
-      @lenses = lenses
-      @rootaug = root
+      @aug = augload(lenses,root)
 
-      @aug = Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD)
-      @aug.transform(
-        :lens => "keepalived.lns",
-        :incl => "/etc/keepalived/keepalived.conf"
-      )
-      @aug.load
-
-    end
-
-    def [](index)
-      all = self.get_all
-      all[index]
-    end
-
-    def each
-      all = self.get_all
-      all.each { |a| yield a }
     end
 
     def create(vrrp_inst, options)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         aug.set("/files/etc/keepalived/keepalived.conf/vrrp_instance[last()+1]", vrrp_inst)
         path = "/files/etc/keepalived/keepalived.conf/vrrp_instance[last()]"
         options.each { |key,value|
@@ -53,22 +30,11 @@ module Puppet::Util::Keepalived
             aug.set(path + "/" + key, value)
           end
         }
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
-
+      end
     end
 
     def set(vrrp_inst, key, value)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         path = self[vrrp_inst][:path]
         if key == "virtual_ipaddress" then
           # first remove - easier this way
@@ -82,31 +48,18 @@ module Puppet::Util::Keepalived
         else
           aug.set(path + "/" + key, value)
         end
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
 
     def delete(vrrp_inst)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         path = self[vrrp_inst][:path]
         aug.rm(path)
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
   
     def get_all
-      paths = @aug.match("/files/etc/keepalived/keepalived.conf/vrrp_instance")
+      paths = @aug.match("$root/vrrp_instance")
   
       defs = {}   
       paths.each { |path| 

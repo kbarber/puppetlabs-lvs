@@ -1,32 +1,13 @@
 require 'augeas'
+require 'puppet/util/keepalived'
 
 module Puppet::Util::Keepalived
 
-  class RealServer
+  class RealServer < Common
 
     def initialize(lenses = "/var/lib/puppet/modules/lvs/augeas_lenses", 
       root = "/")
-
-      @lenses = lenses
-      @rootaug = root
-
-      @aug = Augeas::open(root,lenses,Augeas::NO_MODL_AUTOLOAD)
-      @aug.transform(
-        :lens => "keepalived.lns",
-        :incl => "/etc/keepalived/keepalived.conf"
-      )
-      @aug.load
-
-    end
-
-    def [](index)
-      all = self.get_all
-      all[index]
-    end
-
-    def each
-      all = self.get_all
-      all.each { |a| yield a }
+      @aug = augload(lenses,root)
     end
 
     def create(inst, options)
@@ -37,22 +18,12 @@ module Puppet::Util::Keepalived
       vs_obj = VirtualServer.new
       vspath = vs_obj[vs][:path]
 
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
-        aug.set(vspath + "/real_server[last()+1]", nil)
-        aug.set(vspath + "/real_server[last()]/ip", ip)
-        aug.set(vspath + "/real_server[last()]/port", port)
-        aug.set(vspath + "/real_server[last()]/weight", options["weight"])
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      augsave do |aug|
+        aug.defnode("rspath", vspath + "/real_server[last()+1]", nil)
+        aug.set("$rspath/ip", ip)
+        aug.set("$rspath/port", port)
+        aug.set("$rspath/weight", options["weight"])
+      end
 
       # reload so we can write some more
       @aug.load
@@ -64,13 +35,7 @@ module Puppet::Util::Keepalived
     end
 
     def set(inst, key, value, pathhelp = nil)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         path = pathhelp || self[inst][:path]
         if ["weight","inhibit_on_failure","notify_up",
           "notify_down"].include?(key) then
@@ -81,54 +46,37 @@ module Puppet::Util::Keepalived
         elsif ["healthcheck"].include?(key) then
 
           hc = value["type"].upcase
-          hcpath = path + "/" + hc
 
           # TODO: remove any existing healthchecks
           aug.rm(path + "/HTTP_GET")
 
-          aug.set(hcpath, nil)
+          aug.defnode("hcpath", path + "/" + hc, nil)
 
           value.each do |k,v|
             next if ["type"].include?(k)
             if k == "url" then
               # URL handling is special since its an array of hashes
-              # first remove
-              urlpath = hcpath + "/url"
+              aug.defnode("urlpath", "$hcpath/url[last()+1]", nil)
 
               # now set
-              v.each { |url|
-                aug.set(urlpath + "[last()+1]", nil)
-                aug.set(urlpath + "[last()]/path", url["path"]) if url["path"]
-                aug.set(urlpath + "[last()]/digest", url["digest"]) if url["digest"]
-                aug.set(urlpath + "[last()]/status_code", url["status_code"]) if url["status_code"]
-              }
+              v.each do |url|
+                aug.set("$urlpath/path", url["path"]) if url["path"]
+                aug.set("$urlpath/digest", url["digest"]) if url["digest"]
+                aug.set("$urlpath/status_code", url["status_code"]) if url["status_code"]
+              end
             else
-              aug.set(hcpath + "/" + k, v)
+              aug.set("$hcpath/#{k}", v)
             end
           end
         end
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
 
     def delete(inst)
-      Augeas::open(@rootaug,@lenses,Augeas::NO_MODL_AUTOLOAD) { |aug|
-        aug.transform(
-          :lens => "keepalived.lns",
-          :incl => "/etc/keepalived/keepalived.conf"
-        )
-        aug.load
-
+      augsave do |aug|
         path = self[inst][:path]
         aug.rm(path)
-
-        unless aug.save
-          raise IOError, "Failed to save changes"
-        end
-      }
+      end
     end
   
     def get_all
@@ -203,5 +151,6 @@ module Puppet::Util::Keepalived
       # return definitions
       defs
     end
+
   end
 end
